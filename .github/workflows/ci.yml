@@ -10,6 +10,9 @@ jobs:
   test:
     name: Backend Jest Unit Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -19,20 +22,23 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install Backend Dependencies
-        run: |
-          cd backend
-          npm ci
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Run Jest Test Suite
-        run: |
-          cd backend
-          npm test
+        run: npm test
 
   backend-build:
     name: Backend TypeScript Build Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -42,20 +48,23 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
 
       - name: Install Backend Dependencies
-        run: |
-          cd backend
-          npm ci
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Compile Backend TypeScript
-        run: |
-          cd backend
-          npx tsc --noEmit
+        run: npx tsc --noEmit
 
   frontend-build:
     name: Frontend Next.js Build Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -65,13 +74,10 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install Frontend Dependencies
-        run: |
-          cd frontend
-          npm ci
+        run: npm ci
 
       - name: Build Next.js Application
-        run: |
-          cd frontend
-          npm run build
+        run: npm run build
