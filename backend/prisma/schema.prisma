@@ -1,0 +1,59 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./schemashift.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  testRuns     TestRun[]
+}
+
+model TestRun {
+  id                 String             @id @default(uuid())
+  userId             String?
+  user               User?              @relation(fields: [userId], references: [id])
+  sqlSubmitted       String
+  status             String             @default("running") // running, safe, warning, dangerous, failed
+  createdAt          DateTime           @default(now())
+  result             TestResult?
+  comparison         RewriteComparison?
+  rollback           RollbackScript?
+}
+
+model TestResult {
+  id                  String   @id @default(uuid())
+  testRunId           String   @unique
+  testRun             TestRun  @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  executionTimeMs     Float
+  dangerScore         Int
+  dangerReason        String
+  locksDetected       String   // JSON string
+  rowsAffected        Int
+  explainPlanJson     String?
+  blastRadiusSentence String?
+}
+
+model RewriteComparison {
+  id                  String   @id @default(uuid())
+  testRunId           String   @unique
+  testRun             TestRun  @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  rewrittenSql        String?
+  originalResultHash  String?
+  rewrittenResultHash String?
+  resultsMatch        Boolean  @default(false)
+  explanation         String?
+}
+
+model RollbackScript {
+  id                   String   @id @default(uuid())
+  testRunId            String   @unique
+  testRun              TestRun  @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  generatedRollbackSql String
+}
