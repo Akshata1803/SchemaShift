@@ -98,13 +98,12 @@ export async function verifyCorrectness(originalSql: string, rewrittenSql: strin
   });
 }
 
-function stripSqlComments(sql: string): string {
-  const lines: string[] = [];
-  for (const line of sql.split(/\r?\n/)) {
-    const s = line.trim();
-    if (!s.startsWith("--")) {
-      lines.push(line);
-    }
-  }
-  return lines.join("\n").trim().replace(/;$/, "");
+export function stripSqlComments(sql: string): string {
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split(/\r?\n/)
+    .filter((line) => !line.trim().startsWith("--"))
+    .join("\n")
+    .trim()
+    .replace(/;$/, "");
 }
