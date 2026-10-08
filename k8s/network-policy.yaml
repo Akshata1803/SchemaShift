@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-sandbox-egress
+  namespace: schemashift-sandboxes
+spec:
+  podSelector:
+    matchLabels:
+      app: schemashift-sandbox
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic only from backend in schemashift namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: schemashift
+  egress:
+    # Deny all egress: Blocks user queries from contacting public internet or AWS/GCP metadata APIs (169.254.169.254)
+    []

@@ -90,7 +90,7 @@ export default function SandboxDashboard() {
         <div className="max-w-xl">
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 rounded-full bg-sage-green/20 text-sage-dark font-mono text-[11px] font-bold uppercase tracking-wider border border-sage-green/30">
-              PostgreSQL 16 Sandbox Engine
+              {testResult?.engine ? `Engine: ${testResult.engine}` : "PostgreSQL 16 Sandbox Engine"}
             </span>
             <span className="text-xs text-forest-ink/60 font-mono">Teardown Guaranteed</span>
           </div>

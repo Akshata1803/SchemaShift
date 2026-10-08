@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schemashift-backend
+  namespace: schemashift
+  labels:
+    app: schemashift-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: schemashift-backend
+  template:
+    metadata:
+      labels:
+        app: schemashift-backend
+    spec:
+      serviceAccountName: schemashift-backend-sa
+      containers:
+        - name: backend
+          image: schemashift/backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PORT
+              value: "8000"
+            - name: SANDBOX_ENGINE
+              value: "k8s"
+            - name: K8S_SANDBOX_NAMESPACE
+              value: "schemashift-sandboxes"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schemashift-backend-svc
+  namespace: schemashift
+spec:
+  selector:
+    app: schemashift-backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

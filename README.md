@@ -17,7 +17,8 @@
 
 ### 🔑 Key Features
 
-* 🧪 **Disposable PostgreSQL Containers (`Dockerode`)**: Spawns isolated `postgres:16-alpine` containers with strict 512MB RAM caps. Containers are automatically wiped and destroyed after execution.
+* 🧪 **Disposable PostgreSQL Sandboxes (`Dockerode` & `Kubernetes`)**: Spawns isolated `postgres:16-alpine` containers or ephemeral Kubernetes Pods with strict 512MB RAM caps and 15s statement timeouts. Sandboxes are automatically wiped and destroyed after execution.
+* ☸️ **Cloud-Native Kubernetes Engine**: Run sandbox tests natively inside hardened Kubernetes clusters (EKS/GKE/Minikube) with zero-trust egress `NetworkPolicy` and `activeDeadlineSeconds` garbage collection without needing `/var/run/docker.sock`.
 * ⚡ **Dual Container Side-by-Side Benchmark**: Runs two isolated containers concurrently to compare execution speedup multipliers (`⚡ 4.2x Faster`), plan cost drop, and table lock reductions.
 * 🗄️ **Synthetic Schema & Data Explorer**: Live drawer showing synthetic tables (`users`, `orders`, `order_items`, `audit_logs`), column data types, indexes, and synthetic sample data rows powered by `@faker-js/faker`.
 * 🛡️ **Blast Radius & Danger Scoring**: Computes a 0–100 danger score and plain-English impact statement based on `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` query plans and lock detection.

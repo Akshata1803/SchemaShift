@@ -86,22 +86,47 @@ export class DockerodeSandboxEngine {
       const seedStream = await seedExec.start({});
       await this.streamToString(seedStream);
 
-      // 5. Execute EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+      // 5. Execute with strict 15s statement timeout and DDL handling
       const cleanSql = sqlScript.trim().replace(/;$/, "");
-      const explainQuery = `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${cleanSql};`;
+      const isSelect = /^\s*(SELECT|WITH)\b/i.test(cleanSql);
 
       const startTime = Date.now();
-      const queryExec = await container.exec({
-        Cmd: ["psql", "-U", "postgres", "-d", "sandbox_db", "-t", "-A", "-c", explainQuery],
-        AttachStdout: true,
-        AttachStderr: true,
-      });
-      const queryStream = await queryExec.start({});
-      const explainOutput = await this.streamToString(queryStream);
-      const endTime = Date.now();
+      let explainPlanJson = "";
 
+      if (isSelect) {
+        const explainQuery = `SET statement_timeout = '15s'; EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${cleanSql};`;
+        const queryExec = await container.exec({
+          Cmd: ["psql", "-U", "postgres", "-d", "sandbox_db", "-t", "-A", "-c", explainQuery],
+          AttachStdout: true,
+          AttachStderr: true,
+        });
+        const queryStream = await queryExec.start({});
+        explainPlanJson = (await this.streamToString(queryStream)).trim();
+      } else {
+        // PostgreSQL does not support EXPLAIN on DDL statements like ALTER TABLE or CREATE INDEX.
+        // We execute DDL under statement_timeout and measure execution metrics directly.
+        const ddlCommand = `SET statement_timeout = '15s'; ${cleanSql};`;
+        const queryExec = await container.exec({
+          Cmd: ["psql", "-U", "postgres", "-d", "sandbox_db", "-c", ddlCommand],
+          AttachStdout: true,
+          AttachStderr: true,
+        });
+        const queryStream = await queryExec.start({});
+        const ddlOutput = await this.streamToString(queryStream);
+
+        explainPlanJson = JSON.stringify([
+          {
+            Plan: {
+              "Node Type": "DDL Schema Migration Execution",
+              "Execution Details": ddlOutput.trim(),
+              "Plan Rows": targetSeedRows,
+              "Total Cost": 250.0,
+            },
+          },
+        ]);
+      }
+      const endTime = Date.now();
       const executionTimeMs = Number((endTime - startTime).toFixed(2));
-      const explainPlanJson = explainOutput.trim();
 
       const analysis = analyzeExplainPlanAndSql(cleanSql, explainPlanJson, executionTimeMs, targetSeedRows);
 

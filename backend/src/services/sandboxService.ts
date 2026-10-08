@@ -1,11 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { DockerodeSandboxEngine } from "../sandbox/dockerodeEngine";
+import { K8sSandboxEngine } from "../sandbox/k8sSandboxEngine";
 import { suggestSqlRewrite } from "./aiOptimizerService";
 import { verifyCorrectness } from "./correctnessVerifierService";
 import { generateRollbackScript } from "./rollbackGeneratorService";
 
 const prisma = new PrismaClient();
-const sandboxEngine = new DockerodeSandboxEngine();
+const sandboxEngine = process.env.SANDBOX_ENGINE === "k8s" 
+  ? new K8sSandboxEngine() 
+  : new DockerodeSandboxEngine();
 
 export async function runMigrationTest(sqlScript: string, targetSeedRows: number = 10000, userId?: string) {
   const cleanSql = sqlScript.trim();
